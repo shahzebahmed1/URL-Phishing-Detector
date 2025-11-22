@@ -1,48 +1,101 @@
 from flask import Flask, render_template, request, jsonify
 from urllib.parse import urlparse
 import re
+import pandas as pd
+import joblib
 
 app = Flask(__name__)
+
+# Load the trained model
+try:
+    model = joblib.load('phishing_detection_model.pkl')
+    print("Model loaded successfully!")
+except:
+    model = None
+    print("Warning: Model not found. Please train the model first.")
 
 def extract_features(url):
     """Extract features from URL for phishing detection"""
     features = {}
-    
-    # Basic URL features
     features['url_length'] = len(url)
     features['nb_dots'] = url.count('.')
     features['nb_hyphens'] = url.count('-')
     features['nb_at'] = url.count('@')
     features['nb_qm'] = url.count('?')
     features['nb_and'] = url.count('&')
+    features['nb_or'] = url.count('|')
     features['nb_eq'] = url.count('=')
-    features['nb_slash'] = url.count('/')
+    features['nb_underscore'] = url.count('_')
+    features['nb_tilde'] = url.count('~')
     features['nb_percent'] = url.count('%')
-    
-    # Parse URL
-    parsed = urlparse(url)
-    hostname = parsed.netloc
-    
-    features['hostname_length'] = len(hostname)
+    features['nb_slash'] = url.count('/')
+    features['nb_star'] = url.count('*')
+    features['nb_colon'] = url.count(':')
+    features['nb_comma'] = url.count(',')
+    features['nb_semicolon'] = url.count(';')
+    features['nb_dollar'] = url.count('$')
+    features['nb_space'] = url.count(' ')
+    features['nb_www'] = 1 if 'www' in url else 0
     features['https_token'] = 1 if 'https' in url.lower() else 0
     
-    # IP address detection
-    ip_pattern = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
-    features['ip_in_url'] = 1 if ip_pattern.search(url) else 0
-    
-    # Suspicious TLDs
-    suspicious_tlds = ['.xyz', '.tk', '.ml', '.ga', '.cf', '.gq']
+    suspicious_tlds = ['.xyz', '.tk', '.ml', '.ga', '.cf', '.gq', '.zip', '.review', '.date', '.gdn']
     features['suspicious_tld'] = 1 if any(tld in url.lower() for tld in suspicious_tlds) else 0
     
-    # URL shorteners
-    shorteners = ['bit.ly', 'goo.gl', 'tinyurl', 't.co', 'ow.ly']
+    shorteners = ['bit.ly', 'goo.gl', 'tinyurl', 't.co', 'ow.ly', 'is.gd', 'buff.ly']
     features['url_shortened'] = 1 if any(short in url.lower() for short in shorteners) else 0
+    
+    features['nb_redirection'] = url.count('//')
+    features['nb_external_redirection'] = url.count('http')
+    features['length_words_raw'] = len(url.split('/'))
+    features['char_repeat'] = max([0] + [len(list(g)) for _, g in re.findall(r'((\w)\2{2,})', url)])
     
     return features
 
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        if model is None:
+            return jsonify({
+                'status': 'error',
+                'message': 'Model not loaded. Please train the model first.'
+            })
+        
+        url = request.form.get('url', '').strip()
+        
+        if not url:
+            return jsonify({
+                'status': 'error',
+                'message': 'Please provide a URL'
+            })
+        
+        # Extract features
+        features = extract_features(url)
+        features_df = pd.DataFrame([features])
+        
+        # Make prediction
+        prediction = model.predict(features_df)[0]
+        probabilities = model.predict_proba(features_df)[0]
+        
+        result = 'Phishing' if prediction == 1 else 'Legitimate'
+        confidence = f"{max(probabilities) * 100:.2f}%"
+        
+        return jsonify({
+            'status': 'success',
+            'url': url,
+            'result': result,
+            'confidence': confidence,
+            'features': features
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        })
 
 if __name__ == '__main__':
     app.run(debug=True)
