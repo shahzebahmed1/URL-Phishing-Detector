@@ -119,6 +119,22 @@
                     </div>
                 </form>
                 
+                <div class="mb-3">
+                    <small class="text-muted">Quick test examples:</small>
+                    <div class="mt-2">
+                        <strong style="font-size: 12px;">Legitimate:</strong><br>
+                        <button class="btn btn-sm btn-outline-success me-2 mb-2 test-url" data-url="https://www.google.com">Google</button>
+                        <button class="btn btn-sm btn-outline-success me-2 mb-2 test-url" data-url="https://www.github.com">GitHub</button>
+                        <button class="btn btn-sm btn-outline-success me-2 mb-2 test-url" data-url="https://www.microsoft.com">Microsoft</button>
+                    </div>
+                    <div class="mt-2">
+                        <strong style="font-size: 12px;">Phishing:</strong><br>
+                        <button class="btn btn-sm btn-outline-danger me-2 mb-2 test-url" data-url="https://paypal-verify.xyz/account/login">Fake PayPal</button>
+                        <button class="btn btn-sm btn-outline-danger me-2 mb-2 test-url" data-url="https://toolssocial.in/get-follower/KAXKXb3K77">Social Tool Scam</button>
+                        <button class="btn btn-sm btn-outline-danger me-2 mb-2 test-url" data-url="http://192.168.1.1/login/secure">IP Address Login</button>
+                    </div>
+                </div>
+                
                 <div class="loading" id="loading">
                     <div class="spinner-border spinner-border-sm" role="status"></div>
                     <span class="ms-2">Analyzing...</span>
@@ -206,6 +222,13 @@
     </script>
     <script>
         $(document).ready(function() {
+            // Handle test URL button clicks
+            $('.test-url').click(function() {
+                const url = $(this).data('url');
+                $('#urlInput').val(url);
+                $('#urlForm').submit();
+            });
+
             $('#urlForm').submit(function(e) {
                 e.preventDefault();
                 
