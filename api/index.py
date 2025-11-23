@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from urllib.parse import urlparse
 import re
-import pandas as pd
+import numpy as np
 import joblib
 import os
 
@@ -76,11 +76,15 @@ def predict():
         
         # Extract features
         features = extract_features(url)
-        features_df = pd.DataFrame([features])
+        
+        # Convert features dict to numpy array in the correct order
+        # Feature order must match training data (alphabetical order from pandas)
+        feature_order = sorted(features.keys())
+        features_array = np.array([[features[key] for key in feature_order]])
         
         # Make prediction
-        prediction = model.predict(features_df)[0]
-        probabilities = model.predict_proba(features_df)[0]
+        prediction = model.predict(features_array)[0]
+        probabilities = model.predict_proba(features_array)[0]
         
         result = 'Phishing' if prediction == 1 else 'Legitimate'
         confidence = f"{max(probabilities) * 100:.2f}%"
