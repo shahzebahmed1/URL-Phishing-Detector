@@ -3,6 +3,8 @@ from urllib.parse import urlparse
 import re
 import numpy as np
 import joblib
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 
 app = Flask(__name__)
 

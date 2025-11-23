@@ -4,6 +4,8 @@ import re
 import numpy as np
 import joblib
 import os
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
