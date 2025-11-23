@@ -78,8 +78,14 @@ def predict():
         features = extract_features(url)
         
         # Convert features dict to numpy array in the correct order
-        # Feature order must match training data (alphabetical order from pandas)
-        feature_order = sorted(features.keys())
+        # Feature order must match training data (order from extract_features function)
+        feature_order = [
+            'url_length', 'nb_dots', 'nb_hyphens', 'nb_at', 'nb_qm', 'nb_and', 
+            'nb_or', 'nb_eq', 'nb_underscore', 'nb_tilde', 'nb_percent', 'nb_slash',
+            'nb_star', 'nb_colon', 'nb_comma', 'nb_semicolon', 'nb_dollar', 'nb_space',
+            'nb_www', 'https_token', 'suspicious_tld', 'url_shortened', 'nb_redirection',
+            'nb_external_redirection', 'length_words_raw', 'char_repeat'
+        ]
         features_array = np.array([[features[key] for key in feature_order]])
         
         # Make prediction
